@@ -2,9 +2,7 @@
 
 [🇨🇳 中文文档](README.zh.md)
 
-**ocrtool-mcp** is an open-source macOS-native OCR module built with Swift and Vision framework, designed to comply with the [Model Context Protocol (MCP)](https://mcp-lang.org). It can be invoked by LLM tools like Cursor, Continue, OpenDevin, or custom agents using JSON-RPC over stdin.
-
-ocrtool-mcp is a macOS-native OCR tool that implements the stdin-based MCP module protocol, allowing LLM tools like Cursor or Continue to call it via JSON-RPC.
+**ocrtool-mcp** is an open-source macOS-native OCR module built with Swift and Vision framework, designed to comply with the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). It can be invoked by AI IDE tools like Claude Desktop, Cursor, Continue, Windsurf, Cline, or custom agents using JSON-RPC over stdin.
 
 ![platform](https://img.shields.io/badge/platform-macOS-blue)
 ![language](https://img.shields.io/badge/language-Swift-orange)
@@ -19,12 +17,16 @@ ocrtool-mcp is a macOS-native OCR tool that implements the stdin-based MCP modul
 - ✅ Recognizes both Chinese and English text
 - ✅ MCP-compatible JSON-RPC interface
 - ✅ Returns line-wise OCR results with bounding boxes (in pixels)
+- ✅ Multiple image input methods (local path, URL, Base64)
+- ✅ Flexible output formats (plain text, Markdown table, JSON, code comments)
 - ✅ Lightweight, fast, and fully offline
 - ✅ Open source free software
 
---- 
+---
 
 ## 🚀 Quick Start
+
+### 1. Clone and Build
 
 ```bash
 git clone https://github.com/ihugang/ocrtool-mcp.git
@@ -32,7 +34,16 @@ cd ocrtool-mcp
 swift build -c release
 ```
 
-### Run as MCP Module:
+The executable will be located at `.build/release/ocrtool-mcp`
+
+### 2. View Help
+
+```bash
+.build/release/ocrtool-mcp --help
+```
+
+### 3. Run as MCP Module
+
 ```bash
 .build/release/ocrtool-mcp
 ```
@@ -44,25 +55,299 @@ Send a JSON-RPC request via stdin:
   "id": "1",
   "method": "ocr_text",
   "params": {
-    "image_path": "test.jpg",
+    "image": "test.jpg",
     "lang": "zh+en",
-    "enhanced": true
+    "format": "text"
   }
 }
 ```
 
-Expected output:
+---
+
+## 📋 Parameters
+
+### Core Parameters
+
+| Parameter | Type | Description | Example |
+|-----------|------|-------------|---------|
+| `image` / `image_path` | String | Local image path (supports relative path and `~` expansion) | `"~/Desktop/test.jpg"` |
+| `url` | String | Image URL (auto-download) | `"https://example.com/img.jpg"` |
+| `base64` | String | Base64-encoded image data | `"iVBORw0KGgo..."` |
+| `lang` | String | Recognition languages, separated by `+` | `"zh+en"` (default)<br>`"en"` |
+| `enhanced` | Boolean | Use enhanced recognition | `true` (default) |
+| `format` | String | Output format | See format options below |
+| `output.insertAsComment` | Boolean | Format result as code comments | `true` / `false` |
+| `output.language` | String | Language style for code comments | `"python"`, `"swift"`, `"html"` |
+
+**Note**: Exactly one of `image`/`image_path`, `url`, or `base64` must be provided.
+
+### Output Format Options (`format` parameter)
+
+| Format Value | Description | Output Example |
+|--------------|-------------|----------------|
+| `text` / `simple` | Plain text, one line per result | `Hello\nWorld` |
+| `table` / `markdown` | Markdown table (with coordinates) | See examples below |
+| `structured` / `full` | Full JSON-RPC response (with bbox) | See Quick Start section |
+| `auto` | Auto-select: text for single line, table for multiple | - |
+
+---
+
+## 🛠 AI Tool Configuration Guide
+
+### Claude Desktop (Claude Code)
+
+Claude Desktop uses `claude_desktop_config.json` to configure MCP servers.
+
+**Configuration File Location**:
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+**Configuration Example**:
+
+```json
+{
+  "mcpServers": {
+    "ocrtool": {
+      "command": "/path/to/ocrtool-mcp/.build/release/ocrtool-mcp"
+    }
+  }
+}
+```
+
+**Usage**:
+
+In Claude Desktop chat:
+```
+Please recognize this image: ~/Desktop/screenshot.png
+```
+
+Or more specifically:
+```
+Use ocr_text tool to recognize text in ~/Desktop/receipt.jpg and output as a table
+```
+
+### Cursor
+
+**Configuration File Location**:
+- macOS: `~/.cursor/config.json` or via Cursor Settings UI
+
+**Configuration Example**:
+
+```json
+{
+  "mcpServers": {
+    "ocrtool-mcp": {
+      "command": "/path/to/ocrtool-mcp/.build/release/ocrtool-mcp"
+    }
+  }
+}
+```
+
+**Usage**:
+
+In Cursor AI chat:
+```
+@ocrtool-mcp recognize text from this image: ./assets/diagram.png
+```
+
+### Continue
+
+**Configuration File Location**:
+- macOS: `~/.continue/config.json`
+
+**Configuration Example**:
+
+```json
+{
+  "experimental": {
+    "modelContextProtocolServers": [
+      {
+        "name": "ocrtool-mcp",
+        "command": "/path/to/ocrtool-mcp/.build/release/ocrtool-mcp"
+      }
+    ]
+  }
+}
+```
+
+### Windsurf
+
+**Configuration** (via Settings UI):
+
+1. Open Windsurf Settings
+2. Find MCP Servers configuration
+3. Add new server:
+   - Name: `ocrtool-mcp`
+   - Command: `/path/to/ocrtool-mcp/.build/release/ocrtool-mcp`
+
+### Cline (VSCode Extension)
+
+**Configuration File Location**:
+- macOS: `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
+
+**Configuration Example**:
+
+```json
+{
+  "mcpServers": {
+    "ocrtool-mcp": {
+      "command": "/path/to/ocrtool-mcp/.build/release/ocrtool-mcp"
+    }
+  }
+}
+```
+
+---
+
+## 💡 Usage Examples
+
+### Example 1: Recognize Local Image (Plain Text Output)
+
 ```json
 {
   "jsonrpc": "2.0",
   "id": "1",
-  "result": {
-    "lines": [
-      { "text": "你好", "bbox": { "x": 120, "y": 200, "width": 300, "height": 20 } },
-      { "text": "Hello", "bbox": { "x": 122, "y": 240, "width": 290, "height": 20 } }
-    ]
+  "method": "ocr_text",
+  "params": {
+    "image": "~/Desktop/screenshot.png",
+    "format": "text"
   }
 }
+```
+
+**Output**:
+```
+你好世界
+Hello World
+```
+
+### Example 2: Recognize Image from URL (Markdown Table)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "2",
+  "method": "ocr_text",
+  "params": {
+    "url": "https://example.com/receipt.jpg",
+    "lang": "zh+en",
+    "format": "markdown"
+  }
+}
+```
+
+**Output**:
+```markdown
+| Text | X | Y | Width | Height |
+|------|---|---|--------|--------|
+| 商品名称 | 120 | 50 | 200 | 30 |
+| 总计：¥99.00 | 120 | 450 | 250 | 28 |
+```
+
+### Example 3: Base64 Image Recognition
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "3",
+  "method": "ocr_text",
+  "params": {
+    "base64": "iVBORw0KGgoAAAANSUhEUgAAAAUA...",
+    "format": "structured"
+  }
+}
+```
+
+### Example 4: Generate Python Comment Format
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "4",
+  "method": "ocr_text",
+  "params": {
+    "image": "./code_screenshot.png",
+    "output.insertAsComment": true,
+    "output.language": "python"
+  }
+}
+```
+
+**Output**:
+```python
+# def hello():
+#     print("Hello World")
+```
+
+---
+
+## 🐍 Python Usage Example
+
+The project includes a practical Python example script `test/python/rename_images_by_ocr.py` that demonstrates how to use OCR to automatically rename garbled image files on the desktop.
+
+```python
+import json
+import subprocess
+
+def ocr_image(image_path, ocr_tool_path):
+    """Call ocrtool-mcp to recognize image"""
+    json_rpc = json.dumps({
+        "jsonrpc": "2.0",
+        "id": "1",
+        "method": "ocr_text",
+        "params": {
+            "image": image_path,
+            "format": "structured",
+            "lang": "zh+en"
+        }
+    })
+
+    cmd = f"echo '{json_rpc}' | {ocr_tool_path}"
+    proc = subprocess.Popen(cmd, shell=True,
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+
+    result = json.loads(out.decode())
+    return result.get("result", {}).get("lines", [])
+
+# Usage example
+lines = ocr_image("~/Desktop/test.png",
+                  "/path/to/ocrtool-mcp/.build/release/ocrtool-mcp")
+for line in lines:
+    print(f"Text: {line['text']}, BBox: {line['bbox']}")
+```
+
+---
+
+## 🔧 Troubleshooting
+
+### Issue 1: "command not found"
+
+**Solution**: Use the full path to the compiled executable, e.g.:
+```bash
+/Users/username/ocrtool-mcp/.build/release/ocrtool-mcp
+```
+
+### Issue 2: Claude Desktop Cannot Call MCP Server
+
+**Solution**:
+1. Check that the configuration file path is correct
+2. Restart Claude Desktop application
+3. Check log files (if available) for error messages
+
+### Issue 3: Empty Recognition Results
+
+**Solution**:
+1. Verify the image path is correct and file exists
+2. Verify the image format is supported (PNG, JPG, JPEG, BMP, GIF, TIFF)
+3. Check if the image contains recognizable text
+4. Try using `enhanced: true` parameter for better accuracy
+
+### Issue 4: Permission Error
+
+**Solution**:
+```bash
+chmod +x .build/release/ocrtool-mcp
 ```
 
 ---
@@ -71,37 +356,13 @@ Expected output:
 
 ```
 .
-├── Package.swift
-├── Sources/OCRToolMCP/main.swift
-├── .mcp/
-│   ├── config.json
-│   └── schema/ocr_text.json
-├── README.md
-├── LICENSE
+├── Package.swift                      # Swift package configuration
+├── Sources/OCRToolMCP/main.swift      # Main program source
+├── test/python/rename_images_by_ocr.py # Python usage example
+├── README.md                          # English documentation
+├── README.zh.md                       # Chinese documentation
+├── LICENSE                            # MIT License
 └── .gitignore
-```
-
----
-
-## 📘 MCP Integration
-
-You can use this module with:
-- [Continue](https://github.com/continuedev/continue)
-- [Cursor](https://cursor.sh)
-- Any custom LLM agent that supports MCP stdin/stdout JSON-RPC
-
-### 🛠 Cursor Configuration
-
-To use this module in [Cursor](https://cursor.sh), add the following to your `cursor.json` file:
-
-```json
-{
-  "mcpServers": {
-    "ocrtool-mcp": {
-      "command": "Full path ... /ocrtool-mcp"
-    }
-  }
-}
 ```
 
 ---
@@ -109,6 +370,10 @@ To use this module in [Cursor](https://cursor.sh), add the following to your `cu
 ## 👨‍💻 Author
 
 - Hu Gang ([ihugang](https://github.com/ihugang))
+
+## 🤝 Contributing
+
+Issues and Pull Requests are welcome!
 
 ## 📝 License
 
