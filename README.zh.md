@@ -24,9 +24,34 @@
 
 ---
 
-## 🚀 快速开始
+## 📦 安装
 
-### 1. 克隆和编译
+### 方法 1：下载预编译版本（推荐）
+
+直接下载已编译好的 Universal Binary，支持所有 Mac（Intel 和 Apple Silicon）：
+
+```bash
+# 下载最新版本 (v1.0.0)
+curl -L -O https://github.com/ihugang/ocrtool-mcp/releases/download/v1.0.0/ocrtool-mcp-v1.0.0-universal-macos.tar.gz
+
+# 解压
+tar -xzf ocrtool-mcp-v1.0.0-universal-macos.tar.gz
+
+# 授予执行权限
+chmod +x ocrtool-mcp-v1.0.0-universal
+
+# 移动到系统路径（推荐）
+sudo mv ocrtool-mcp-v1.0.0-universal /usr/local/bin/ocrtool-mcp
+
+# 验证安装
+ocrtool-mcp --help
+```
+
+**或者**，你也可以直接从 [GitHub Releases](https://github.com/ihugang/ocrtool-mcp/releases) 页面下载。
+
+### 方法 2：从源码编译
+
+如果你想自己编译或参与开发：
 
 ```bash
 git clone https://github.com/ihugang/ocrtool-mcp.git
@@ -36,15 +61,23 @@ swift build -c release
 
 编译完成后，可执行文件位于 `.build/release/ocrtool-mcp`
 
-### 2. 查看帮助信息
+---
+
+## 🚀 快速开始
+
+### 查看帮助信息
 
 ```bash
+ocrtool-mcp --help
+# 或者如果从源码编译
 .build/release/ocrtool-mcp --help
 ```
 
-### 3. 作为 MCP 模块运行
+### 作为 MCP 模块运行
 
 ```bash
+ocrtool-mcp
+# 或者如果从源码编译
 .build/release/ocrtool-mcp
 ```
 

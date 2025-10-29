@@ -24,9 +24,34 @@
 
 ---
 
-## 🚀 Quick Start
+## 📦 Installation
 
-### 1. Clone and Build
+### Method 1: Download Pre-built Binary (Recommended)
+
+Download the pre-compiled Universal Binary that supports all Macs (Intel and Apple Silicon):
+
+```bash
+# Download latest version (v1.0.0)
+curl -L -O https://github.com/ihugang/ocrtool-mcp/releases/download/v1.0.0/ocrtool-mcp-v1.0.0-universal-macos.tar.gz
+
+# Extract
+tar -xzf ocrtool-mcp-v1.0.0-universal-macos.tar.gz
+
+# Make executable
+chmod +x ocrtool-mcp-v1.0.0-universal
+
+# Move to system path (recommended)
+sudo mv ocrtool-mcp-v1.0.0-universal /usr/local/bin/ocrtool-mcp
+
+# Verify installation
+ocrtool-mcp --help
+```
+
+**Alternatively**, you can download directly from the [GitHub Releases](https://github.com/ihugang/ocrtool-mcp/releases) page.
+
+### Method 2: Build from Source
+
+If you prefer to build from source or contribute to development:
 
 ```bash
 git clone https://github.com/ihugang/ocrtool-mcp.git
@@ -36,15 +61,23 @@ swift build -c release
 
 The executable will be located at `.build/release/ocrtool-mcp`
 
-### 2. View Help
+---
+
+## 🚀 Quick Start
+
+### View Help
 
 ```bash
+ocrtool-mcp --help
+# Or if built from source
 .build/release/ocrtool-mcp --help
 ```
 
-### 3. Run as MCP Module
+### Run as MCP Module
 
 ```bash
+ocrtool-mcp
+# Or if built from source
 .build/release/ocrtool-mcp
 ```
 

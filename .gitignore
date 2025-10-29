@@ -23,3 +23,6 @@ xcuserdata/
 
 # MCP plugins cache (if any)
 .mcp_plugins/
+
+# Release artifacts
+release/
