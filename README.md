@@ -2,7 +2,7 @@
 
 [🇨🇳 中文文档](README.zh.md)
 
-**ocrtool-mcp** is an open-source macOS-native OCR module built with Swift and Vision framework, designed to comply with the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). It can be invoked by AI IDE tools like Claude Desktop, Cursor, Continue, Windsurf, Cline, or custom agents using JSON-RPC over stdin.
+**ocrtool-mcp** is an open-source macOS-native OCR module built with Swift and Vision framework, designed to comply with the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). It can be invoked by AI IDE tools like Claude Desktop, Cursor, Continue, Windsurf, Cline, Cherry Studio, or custom agents using JSON-RPC over stdin.
 
 ![platform](https://img.shields.io/badge/platform-macOS-blue)
 ![language](https://img.shields.io/badge/language-Swift-orange)
@@ -194,6 +194,27 @@ In Cursor AI chat:
     }
   }
 }
+```
+
+### Cherry Studio
+
+**Configuration** (via UI):
+
+1. Open Cherry Studio Settings
+2. Navigate to `Settings → MCP Servers → Add Server`
+3. Fill in server information:
+   - **Name**: `ocrtool-mcp`
+   - **Type**: `STDIO`
+   - **Command**: `/path/to/ocrtool-mcp/.build/release/ocrtool-mcp`
+   - **Arguments**: (leave empty)
+   - **Environment Variables**: (leave empty)
+4. Save configuration
+
+**Usage**:
+
+In Cherry Studio chat interface, if the model supports MCP tool calls, you'll see a wrench icon to directly invoke OCR functionality:
+```
+Recognize text from this image: ~/Desktop/screenshot.png
 ```
 
 ---

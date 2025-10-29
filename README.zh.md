@@ -2,7 +2,7 @@
 
 [🇺🇸 English Documentation](README.md)
 
-**ocrtool-mcp** 是一个基于 macOS Vision 框架构建的原生 OCR 模块，使用 Swift 实现，遵循 [Model Context Protocol (MCP)](https://modelcontextprotocol.io) 协议，可被如 Claude Desktop、Cursor、Continue、Windsurf、Cline 等 AI IDE 工具调用。
+**ocrtool-mcp** 是一个基于 macOS Vision 框架构建的原生 OCR 模块，使用 Swift 实现，遵循 [Model Context Protocol (MCP)](https://modelcontextprotocol.io) 协议，可被如 Claude Desktop、Cursor、Continue、Windsurf、Cline、Cherry Studio 等 AI IDE 工具调用。
 
 ![platform](https://img.shields.io/badge/platform-macOS-blue)
 ![language](https://img.shields.io/badge/language-Swift-orange)
@@ -194,6 +194,27 @@ Claude Desktop 使用 `claude_desktop_config.json` 配置 MCP 服务器。
     }
   }
 }
+```
+
+### Cherry Studio
+
+**配置方式**（通过 UI 界面）：
+
+1. 打开 Cherry Studio 设置
+2. 进入 `设置 → MCP 服务器 → 添加服务器`
+3. 填写服务器信息：
+   - **名称 (Name)**: `ocrtool-mcp`
+   - **类型 (Type)**: `STDIO`
+   - **命令 (Command)**: `/path/to/ocrtool-mcp/.build/release/ocrtool-mcp`
+   - **参数 (Arguments)**: （留空）
+   - **环境变量**: （留空）
+4. 保存配置
+
+**使用方式**：
+
+在 Cherry Studio 聊天界面中，如果模型支持 MCP 工具调用，你会看到扳手图标，可以直接调用 OCR 功能：
+```
+识别这张图片中的文字：~/Desktop/screenshot.png
 ```
 
 ---
