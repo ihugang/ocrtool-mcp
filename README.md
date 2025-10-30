@@ -26,7 +26,19 @@
 
 ## 📦 Installation
 
-### Method 1: Download Pre-built Binary (Recommended)
+### Method 1: Using Homebrew (Easiest)
+
+```bash
+brew tap ihugang/ocrtool
+brew install ocrtool-mcp
+```
+
+Ready to use after installation:
+```bash
+ocrtool-mcp --help
+```
+
+### Method 2: Download Pre-built Binary
 
 Download the pre-compiled Universal Binary that supports all Macs (Intel and Apple Silicon):
 
@@ -49,7 +61,7 @@ ocrtool-mcp --help
 
 **Alternatively**, you can download directly from the [GitHub Releases](https://github.com/ihugang/ocrtool-mcp/releases) page.
 
-### Method 2: Build from Source
+### Method 3: Build from Source
 
 If you prefer to build from source or contribute to development:
 
