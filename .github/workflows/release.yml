@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "5.9"
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Build universal binary
+        run: |
+          swift build -c release --arch arm64 --arch x86_64
+          cp .build/apple/Products/Release/ocrtool-mcp ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal
+
+      - name: Verify universal binary
+        run: |
+          file ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal
+          lipo -info ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal
+
+      - name: Create release archive
+        run: |
+          tar -czf ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal-macos.tar.gz ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal
+          shasum -a 256 ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal > checksums.txt
+          shasum -a 256 ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal-macos.tar.gz >> checksums.txt
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          cat > release_notes.md << 'EOF'
+          ## Installation
+
+          ### Homebrew
+
+          \`\`\`bash
+          brew tap ihugang/ocrtool
+          brew install ocrtool-mcp
+          \`\`\`
+
+          ### Direct Download
+
+          \`\`\`bash
+          curl -L -O https://github.com/ihugang/ocrtool-mcp/releases/download/v${{ steps.get_version.outputs.VERSION }}/ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal-macos.tar.gz
+          tar -xzf ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal-macos.tar.gz
+          chmod +x ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal
+          sudo mv ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal /usr/local/bin/ocrtool-mcp
+          \`\`\`
+
+          ## What's Changed
+
+          See [CHANGELOG](https://github.com/ihugang/ocrtool-mcp/blob/master/CHANGELOG.md) for detailed changes.
+
+          ## Checksums (SHA256)
+
+          \`\`\`
+          $(cat checksums.txt)
+          \`\`\`
+
+          ## Documentation
+
+          - [English README](https://github.com/ihugang/ocrtool-mcp/blob/master/README.md)
+          - [中文文档](https://github.com/ihugang/ocrtool-mcp/blob/master/README.zh.md)
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal
+            ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal-macos.tar.gz
+            checksums.txt
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main, develop ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "5.9"
+
+      - name: Build (Release)
+        run: swift build -c release
+
+      - name: Build (Universal Binary)
+        run: swift build -c release --arch arm64 --arch x86_64
+
+      - name: Verify binary
+        run: |
+          file .build/apple/Products/Release/ocrtool-mcp
+          lipo -info .build/apple/Products/Release/ocrtool-mcp
+
+      - name: Test --help command
+        run: .build/apple/Products/Release/ocrtool-mcp --help
+
+      - name: Swift lint (if available)
+        continue-on-error: true
+        run: |
+          if command -v swiftlint &> /dev/null; then
+            swiftlint
+          else
+            echo "SwiftLint not installed, skipping"
+          fi
