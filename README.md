@@ -43,17 +43,17 @@ ocrtool-mcp --help
 Download the pre-compiled Universal Binary that supports all Macs (Intel and Apple Silicon):
 
 ```bash
-# Download latest version (v1.0.1)
-curl -L -O https://github.com/ihugang/ocrtool-mcp/releases/download/v1.0.1/ocrtool-mcp-v1.0.1-universal-macos.tar.gz
+# Download latest version (v1.0.3)
+curl -L -O https://github.com/ihugang/ocrtool-mcp/releases/download/v1.0.3/ocrtool-mcp-v1.0.3-universal-macos.tar.gz
 
 # Extract
-tar -xzf ocrtool-mcp-v1.0.1-universal-macos.tar.gz
+tar -xzf ocrtool-mcp-v1.0.3-universal-macos.tar.gz
 
 # Make executable
-chmod +x ocrtool-mcp-v1.0.1-universal
+chmod +x ocrtool-mcp-v1.0.3-universal
 
 # Move to system path (recommended)
-sudo mv ocrtool-mcp-v1.0.1-universal /usr/local/bin/ocrtool-mcp
+sudo mv ocrtool-mcp-v1.0.3-universal /usr/local/bin/ocrtool-mcp
 
 # Verify installation
 ocrtool-mcp --help
@@ -105,7 +105,7 @@ Typical MCP lifecycle over stdin:
     "capabilities": {},
     "clientInfo": {
       "name": "example-client",
-      "version": "1.0.1"
+      "version": "1.0.3"
     }
   }
 }
@@ -413,7 +413,7 @@ def ocr_image(image_path, ocr_tool_path):
         "params": {
             "protocolVersion": "2024-11-05",
             "capabilities": {},
-            "clientInfo": {"name": "python-example", "version": "1.0.1"}
+            "clientInfo": {"name": "python-example", "version": "1.0.3"}
         }
     })
     initialized = json.dumps({

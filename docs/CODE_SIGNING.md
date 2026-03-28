@@ -8,7 +8,7 @@ For a complete automated build, sign, notarize, package, and formula-update work
 
 ```bash
 # One command to rule them all
-./scripts/build-release.sh 1.0.1
+./scripts/build-release.sh 1.0.3
 
 # This will:
 # 1. Run tests
@@ -226,7 +226,7 @@ The release workflow will publish a binary-based formula and sync it back to the
 If you need to update the formula manually:
 
 ```bash
-./scripts/update-formula.sh 1.0.1 <archive-sha256>
+./scripts/update-formula.sh 1.0.3 <archive-sha256>
 ```
 
 ### Legacy Manual GitHub Actions Example
@@ -326,7 +326,7 @@ Here's the recommended workflow for creating a new release with signing and nota
 
 ```bash
 # Build, sign, and optionally notarize
-./scripts/build-release.sh 1.0.1
+./scripts/build-release.sh 1.0.3
 
 # The script will prompt you to notarize
 # Output will be in release/ directory
@@ -343,7 +343,7 @@ swift build -c release --arch arm64 --arch x86_64
 
 # 3. Package
 cd .build/apple/Products/Release
-tar -czf ocrtool-mcp-v1.0.1-universal-macos.tar.gz ocrtool-mcp
+tar -czf ocrtool-mcp-v1.0.3-universal-macos.tar.gz ocrtool-mcp
 zip -r ocrtool-mcp.zip ocrtool-mcp
 
 # 4. Notarize
@@ -355,22 +355,22 @@ spctl --assess --verbose .build/apple/Products/Release/ocrtool-mcp
 
 # 6. Generate checksums
 cd .build/apple/Products/Release
-shasum -a 256 ocrtool-mcp ocrtool-mcp-v1.0.1-universal-macos.tar.gz
+shasum -a 256 ocrtool-mcp ocrtool-mcp-v1.0.3-universal-macos.tar.gz
 ```
 
 ### Publishing to GitHub
 
 ```bash
 # Create and push tag
-git tag v1.0.1
-git push origin v1.0.1
+git tag v1.0.3
+git push origin v1.0.3
 
 # GitHub Actions will automatically build and create release
 # Or manually create release:
-gh release create v1.0.1 \
-    release/ocrtool-mcp-v1.0.1-universal-macos.tar.gz \
+gh release create v1.0.3 \
+    release/ocrtool-mcp-v1.0.3-universal-macos.tar.gz \
     release/checksums.txt \
-    --title "v1.0.1 Release" \
+    --title "v1.0.3 Release" \
     --notes "See CHANGELOG.md for details"
 ```
 
@@ -380,7 +380,7 @@ After publishing a new release:
 
 ```bash
 # 1. Get SHA256 of the new release
-curl -sL https://github.com/ihugang/ocrtool-mcp/archive/refs/tags/v1.0.1.tar.gz | shasum -a 256
+curl -sL https://github.com/ihugang/ocrtool-mcp/archive/refs/tags/v1.0.3.tar.gz | shasum -a 256
 
 # 2. Update Formula/ocrtool-mcp.rb:
 #    - Update version number
@@ -389,7 +389,7 @@ curl -sL https://github.com/ihugang/ocrtool-mcp/archive/refs/tags/v1.0.1.tar.gz 
 # 3. Commit and push to homebrew-ocrtool repository
 cd /opt/homebrew/Library/Taps/ihugang/homebrew-ocrtool
 git add Formula/ocrtool-mcp.rb
-git commit -m "Update ocrtool-mcp to v1.0.1"
+git commit -m "Update ocrtool-mcp to v1.0.3"
 git push
 
 # 4. Test the update

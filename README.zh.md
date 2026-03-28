@@ -43,17 +43,17 @@ ocrtool-mcp --help
 直接下载已编译好的 Universal Binary，支持所有 Mac（Intel 和 Apple Silicon）：
 
 ```bash
-# 下载最新版本 (v1.0.1)
-curl -L -O https://github.com/ihugang/ocrtool-mcp/releases/download/v1.0.1/ocrtool-mcp-v1.0.1-universal-macos.tar.gz
+# 下载最新版本 (v1.0.3)
+curl -L -O https://github.com/ihugang/ocrtool-mcp/releases/download/v1.0.3/ocrtool-mcp-v1.0.3-universal-macos.tar.gz
 
 # 解压
-tar -xzf ocrtool-mcp-v1.0.1-universal-macos.tar.gz
+tar -xzf ocrtool-mcp-v1.0.3-universal-macos.tar.gz
 
 # 授予执行权限
-chmod +x ocrtool-mcp-v1.0.1-universal
+chmod +x ocrtool-mcp-v1.0.3-universal
 
 # 移动到系统路径（推荐）
-sudo mv ocrtool-mcp-v1.0.1-universal /usr/local/bin/ocrtool-mcp
+sudo mv ocrtool-mcp-v1.0.3-universal /usr/local/bin/ocrtool-mcp
 
 # 验证安装
 ocrtool-mcp --help
@@ -104,7 +104,7 @@ ocrtool-mcp
     "capabilities": {},
     "clientInfo": {
       "name": "example-client",
-      "version": "1.0.1"
+      "version": "1.0.3"
     }
   }
 }
@@ -412,7 +412,7 @@ def ocr_image(image_path, ocr_tool_path):
         "params": {
             "protocolVersion": "2024-11-05",
             "capabilities": {},
-            "clientInfo": {"name": "python-example", "version": "1.0.1"}
+            "clientInfo": {"name": "python-example", "version": "1.0.3"}
         }
     })
     initialized = json.dumps({

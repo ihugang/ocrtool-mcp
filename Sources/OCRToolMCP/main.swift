@@ -18,7 +18,7 @@ private func showHelpAndExit() -> Never {
       ocr_extract_text
 
     Example initialize request:
-    {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"example-client","version":"1.0.1"}}}
+    {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"example-client","version":"1.0.3"}}}
 
     Example tool call:
     {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"ocr_extract_text","arguments":{"image_path":"./test.jpg","lang":"zh+en","format":"markdown"}}}

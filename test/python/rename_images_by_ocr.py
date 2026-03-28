@@ -27,7 +27,7 @@ def ocr_image(image_path):
         "params": {
             "protocolVersion": "2024-11-05",
             "capabilities": {},
-            "clientInfo": {"name": "rename-images-by-ocr", "version": "1.0.1"}
+            "clientInfo": {"name": "rename-images-by-ocr", "version": "1.0.3"}
         }
     })
     initialized = json.dumps({
