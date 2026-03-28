@@ -2,7 +2,7 @@
 
 [🇨🇳 中文文档](README.zh.md)
 
-**ocrtool-mcp** is an open-source macOS-native OCR module built with Swift and Vision framework, designed to comply with the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). It can be invoked by AI IDE tools like Claude Desktop, Cursor, Continue, Windsurf, Cline, Cherry Studio, or custom agents using JSON-RPC over stdin.
+**ocrtool-mcp** is an open-source macOS-native OCR MCP server built with Swift and the Vision framework. It is designed for local stdio integrations in tools like Claude Desktop, Cursor, Continue, Windsurf, Cline, Cherry Studio, or custom agents using JSON-RPC over stdin.
 
 ![platform](https://img.shields.io/badge/platform-macOS-blue)
 ![language](https://img.shields.io/badge/language-Swift-orange)
@@ -15,7 +15,7 @@
 
 - ✅ Accurate OCR powered by macOS Vision Framework
 - ✅ Recognizes both Chinese and English text
-- ✅ MCP-compatible JSON-RPC interface
+- ✅ Standard MCP lifecycle with `initialize`, `tools/list`, and `tools/call`
 - ✅ Returns line-wise OCR results with bounding boxes (in pixels)
 - ✅ Multiple image input methods (local path, URL, Base64)
 - ✅ Flexible output formats (plain text, Markdown table, JSON, code comments)
@@ -43,17 +43,17 @@ ocrtool-mcp --help
 Download the pre-compiled Universal Binary that supports all Macs (Intel and Apple Silicon):
 
 ```bash
-# Download latest version (v1.0.0)
-curl -L -O https://github.com/ihugang/ocrtool-mcp/releases/download/v1.0.0/ocrtool-mcp-v1.0.0-universal-macos.tar.gz
+# Download latest version (v1.0.1)
+curl -L -O https://github.com/ihugang/ocrtool-mcp/releases/download/v1.0.1/ocrtool-mcp-v1.0.1-universal-macos.tar.gz
 
 # Extract
-tar -xzf ocrtool-mcp-v1.0.0-universal-macos.tar.gz
+tar -xzf ocrtool-mcp-v1.0.1-universal-macos.tar.gz
 
 # Make executable
-chmod +x ocrtool-mcp-v1.0.0-universal
+chmod +x ocrtool-mcp-v1.0.1-universal
 
 # Move to system path (recommended)
-sudo mv ocrtool-mcp-v1.0.0-universal /usr/local/bin/ocrtool-mcp
+sudo mv ocrtool-mcp-v1.0.1-universal /usr/local/bin/ocrtool-mcp
 
 # Verify installation
 ocrtool-mcp --help
@@ -93,16 +93,50 @@ ocrtool-mcp
 .build/release/ocrtool-mcp
 ```
 
-Send a JSON-RPC request via stdin:
+Typical MCP lifecycle over stdin:
+
 ```json
 {
   "jsonrpc": "2.0",
-  "id": "1",
-  "method": "ocr_text",
+  "id": 1,
+  "method": "initialize",
   "params": {
-    "image": "test.jpg",
-    "lang": "zh+en",
-    "format": "text"
+    "protocolVersion": "2024-11-05",
+    "capabilities": {},
+    "clientInfo": {
+      "name": "example-client",
+      "version": "1.0.1"
+    }
+  }
+}
+```
+
+Then send:
+
+```json
+{"jsonrpc":"2.0","method":"notifications/initialized"}
+```
+
+List available tools:
+
+```json
+{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
+```
+
+Call the OCR tool:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "ocr_extract_text",
+    "arguments": {
+      "image_path": "test.jpg",
+      "lang": "zh+en",
+      "format": "text"
+    }
   }
 }
 ```
@@ -124,7 +158,7 @@ Send a JSON-RPC request via stdin:
 | `output.insertAsComment` | Boolean | Format result as code comments | `true` / `false` |
 | `output.language` | String | Language style for code comments | `"python"`, `"swift"`, `"html"` |
 
-**Note**: Exactly one of `image`/`image_path`, `url`, or `base64` must be provided.
+**Note**: Exactly one of `image`/`image_path`, `url`, or `base64` must be provided. In MCP calls, these fields live under `params.arguments`.
 
 ### Output Format Options (`format` parameter)
 
@@ -132,7 +166,7 @@ Send a JSON-RPC request via stdin:
 |--------------|-------------|----------------|
 | `text` / `simple` | Plain text, one line per result | `Hello\nWorld` |
 | `table` / `markdown` | Markdown table (with coordinates) | See examples below |
-| `structured` / `full` | Full JSON-RPC response (with bbox) | See Quick Start section |
+| `structured` / `full` | JSON string containing OCR lines with bounding boxes | `{"lines":[...]}` |
 | `auto` | Auto-select: text for single line, table for multiple | - |
 
 ---
@@ -167,8 +201,10 @@ Please recognize this image: ~/Desktop/screenshot.png
 
 Or more specifically:
 ```
-Use ocr_text tool to recognize text in ~/Desktop/receipt.jpg and output as a table
+Use `ocr_extract_text` to recognize text in `~/Desktop/receipt.jpg` and output as a table
 ```
+
+The tool name is now `ocr_extract_text`.
 
 ### Cursor
 
@@ -271,11 +307,14 @@ Recognize text from this image: ~/Desktop/screenshot.png
 ```json
 {
   "jsonrpc": "2.0",
-  "id": "1",
-  "method": "ocr_text",
+  "id": 1,
+  "method": "tools/call",
   "params": {
-    "image": "~/Desktop/screenshot.png",
-    "format": "text"
+    "name": "ocr_extract_text",
+    "arguments": {
+      "image_path": "~/Desktop/screenshot.png",
+      "format": "text"
+    }
   }
 }
 ```
@@ -291,12 +330,15 @@ Hello World
 ```json
 {
   "jsonrpc": "2.0",
-  "id": "2",
-  "method": "ocr_text",
+  "id": 2,
+  "method": "tools/call",
   "params": {
-    "url": "https://example.com/receipt.jpg",
-    "lang": "zh+en",
-    "format": "markdown"
+    "name": "ocr_extract_text",
+    "arguments": {
+      "url": "https://example.com/receipt.jpg",
+      "lang": "zh+en",
+      "format": "markdown"
+    }
   }
 }
 ```
@@ -314,11 +356,14 @@ Hello World
 ```json
 {
   "jsonrpc": "2.0",
-  "id": "3",
-  "method": "ocr_text",
+  "id": 3,
+  "method": "tools/call",
   "params": {
-    "base64": "iVBORw0KGgoAAAANSUhEUgAAAAUA...",
-    "format": "structured"
+    "name": "ocr_extract_text",
+    "arguments": {
+      "base64": "iVBORw0KGgoAAAANSUhEUgAAAAUA...",
+      "format": "structured"
+    }
   }
 }
 ```
@@ -328,12 +373,17 @@ Hello World
 ```json
 {
   "jsonrpc": "2.0",
-  "id": "4",
-  "method": "ocr_text",
+  "id": 4,
+  "method": "tools/call",
   "params": {
-    "image": "./code_screenshot.png",
-    "output.insertAsComment": true,
-    "output.language": "python"
+    "name": "ocr_extract_text",
+    "arguments": {
+      "image_path": "./code_screenshot.png",
+      "output": {
+        "insertAsComment": true,
+        "language": "python"
+      }
+    }
   }
 }
 ```
@@ -355,26 +405,44 @@ import json
 import subprocess
 
 def ocr_image(image_path, ocr_tool_path):
-    """Call ocrtool-mcp to recognize image"""
-    json_rpc = json.dumps({
+    """Call ocrtool-mcp through the MCP tools/call interface."""
+    initialize = json.dumps({
         "jsonrpc": "2.0",
-        "id": "1",
-        "method": "ocr_text",
+        "id": 1,
+        "method": "initialize",
         "params": {
-            "image": image_path,
-            "format": "structured",
-            "lang": "zh+en"
+            "protocolVersion": "2024-11-05",
+            "capabilities": {},
+            "clientInfo": {"name": "python-example", "version": "1.0.1"}
+        }
+    })
+    initialized = json.dumps({
+        "jsonrpc": "2.0",
+        "method": "notifications/initialized"
+    })
+    tool_call = json.dumps({
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+            "name": "ocr_extract_text",
+            "arguments": {
+                "image_path": image_path,
+                "format": "structured",
+                "lang": "zh+en"
+            }
         }
     })
 
-    cmd = f"echo '{json_rpc}' | {ocr_tool_path}"
+    cmd = f"printf '%s\\n%s\\n%s\\n' '{initialize}' '{initialized}' '{tool_call}' | {ocr_tool_path}"
     proc = subprocess.Popen(cmd, shell=True,
                           stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE)
     out, err = proc.communicate()
 
-    result = json.loads(out.decode())
-    return result.get("result", {}).get("lines", [])
+    responses = [json.loads(line) for line in out.decode().splitlines() if line.strip()]
+    tool_result = responses[-1]["result"]["content"][0]["text"]
+    return json.loads(tool_result).get("lines", [])
 
 # Usage example
 lines = ocr_image("~/Desktop/test.png",

@@ -19,19 +19,19 @@ jobs:
         with:
           swift-version: "5.9"
 
-      - name: Build (Release)
-        run: swift build -c release
+      - name: Run tests
+        run: swift test
 
-      - name: Build (Universal Binary)
-        run: swift build -c release --arch arm64 --arch x86_64
+      - name: Build release artifacts
+        env:
+          SIGN_IDENTITY: ""
+          NOTARIZE: never
+          UPDATE_FORMULA: false
+          RUN_TESTS: false
+        run: ./scripts/build-release.sh ci
 
-      - name: Verify binary
-        run: |
-          file .build/apple/Products/Release/ocrtool-mcp
-          lipo -info .build/apple/Products/Release/ocrtool-mcp
-
-      - name: Test --help command
-        run: .build/apple/Products/Release/ocrtool-mcp --help
+      - name: Test packaged binary
+        run: ./release/ocrtool-mcp-vci-universal --help
 
       - name: Swift lint (if available)
         continue-on-error: true

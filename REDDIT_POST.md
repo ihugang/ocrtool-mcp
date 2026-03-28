@@ -4,7 +4,7 @@
 
 ## Title
 
-**[Release] ocrtool-mcp v1.0.0 - Native macOS OCR tool implementing Model Context Protocol**
+**[Release] ocrtool-mcp v1.0.1 - Native macOS OCR tool implementing Model Context Protocol**
 
 ---
 
@@ -42,10 +42,10 @@ The tool works with any MCP-compatible client, including:
 **Option 1: Pre-built binary (recommended)**
 
 ```bash
-curl -L -O https://github.com/ihugang/ocrtool-mcp/releases/download/v1.0.0/ocrtool-mcp-v1.0.0-universal-macos.tar.gz
-tar -xzf ocrtool-mcp-v1.0.0-universal-macos.tar.gz
-chmod +x ocrtool-mcp-v1.0.0-universal
-sudo mv ocrtool-mcp-v1.0.0-universal /usr/local/bin/ocrtool-mcp
+curl -L -O https://github.com/ihugang/ocrtool-mcp/releases/download/v1.0.1/ocrtool-mcp-v1.0.1-universal-macos.tar.gz
+tar -xzf ocrtool-mcp-v1.0.1-universal-macos.tar.gz
+chmod +x ocrtool-mcp-v1.0.1-universal
+sudo mv ocrtool-mcp-v1.0.1-universal /usr/local/bin/ocrtool-mcp
 ```
 
 **Option 2: Build from source**
@@ -88,7 +88,7 @@ I needed a simple way to extract text from screenshots and images while working 
 
 - GitHub: https://github.com/ihugang/ocrtool-mcp
 - Documentation: See README for detailed configuration examples
-- Release: https://github.com/ihugang/ocrtool-mcp/releases/tag/v1.0.0
+- Release: https://github.com/ihugang/ocrtool-mcp/releases/tag/v1.0.1
 
 ### Feedback Welcome
 

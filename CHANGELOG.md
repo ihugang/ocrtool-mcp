@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-03-29
+
+### Added
+- Standard MCP lifecycle support for `initialize`, `notifications/initialized`, `tools/list`, and `tools/call`
+- Public core target for easier testing and future protocol extensions
+- Automated tests covering MCP initialization, tool discovery, and tool error handling
+- OCR integration tests covering local path, file URL, HTTP URL, and base64 inputs
+
+### Changed
+- Replaced the custom `ocr_text` request flow with the MCP tool `ocr_extract_text`
+- Updated documentation to reflect the actual MCP handshake and tool call flow
+- Mapped `enhanced` to Vision recognition level selection (`accurate` vs `fast`)
+- Unified release packaging around `scripts/build-release.sh` and `scripts/update-formula.sh`
+- Aligned CI and release workflows with the same packaging flow and release artifact names
+
+### Fixed
+- Removed stdout banner output that could corrupt MCP stdio responses
+- Fixed nested `output` argument parsing for comment rendering options
+- Unified runtime version metadata with the released package version
+- Return explicit tool errors instead of silently returning empty OCR results for invalid inputs
+- Prepared the release workflow to sync the Homebrew formula back to the default branch after publishing
+
 ## [1.0.0] - 2025-10-29
 
 ### Added
@@ -33,11 +55,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned
-- PDF support
-- Batch processing
-- Additional language support
-- Configuration helper tool
-- Code signing and notarization
-
+[1.0.1]: https://github.com/ihugang/ocrtool-mcp/releases/tag/v1.0.1
 [1.0.0]: https://github.com/ihugang/ocrtool-mcp/releases/tag/v1.0.0

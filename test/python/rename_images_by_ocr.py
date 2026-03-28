@@ -20,35 +20,47 @@ def is_garbled(filename):
 
 def ocr_image(image_path):
     print(f"OCR识别图片: {image_path}")
-    # 构造 jsonrpc 请求
-    json_rpc = json.dumps({
+    initialize = json.dumps({
         "jsonrpc": "2.0",
-        "id": "1",
-        "method": "ocr_text",
+        "id": 1,
+        "method": "initialize",
         "params": {
-            "image": os.path.expanduser(image_path),
-            "format": "structured",
-            "lang": "zh+en",
-            "detect_orientation": True
+            "protocolVersion": "2024-11-05",
+            "capabilities": {},
+            "clientInfo": {"name": "rename-images-by-ocr", "version": "1.0.1"}
         }
     })
-    # 拼接命令
-    cmd = f"echo '{json_rpc}' | {OCR_TOOL}"
-    # 用shell直接运行并获取stdout
+    initialized = json.dumps({
+        "jsonrpc": "2.0",
+        "method": "notifications/initialized"
+    })
+    tool_call = json.dumps({
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+            "name": "ocr_extract_text",
+            "arguments": {
+                "image_path": os.path.expanduser(image_path),
+                "format": "structured",
+                "lang": "zh+en"
+            }
+        }
+    })
+
+    cmd = f"printf '%s\\n%s\\n%s\\n' '{initialize}' '{initialized}' '{tool_call}' | {OCR_TOOL}"
     proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = proc.communicate()
-    raw_output = out.decode(errors='ignore')
-    #print("OCR原始输出（截断1000字）：", raw_output[:1000])
-    # 只取最后一个完整的JSON对象
+
     try:
-        last_brace = raw_output.find('{')
-        if last_brace != -1:
-            result = json.loads(raw_output[last_brace:])
-        else:
-            result = json.loads(raw_output)
-        
+        responses = [json.loads(line) for line in out.decode(errors='ignore').splitlines() if line.strip()]
+        result = responses[-1]["result"]
         print("识别到的文本：", result)
-        lines = result.get("result", {}).get("lines", [])
+        if result.get("isError"):
+            print("OCR工具返回错误：", result["content"][0]["text"])
+            return []
+
+        lines = json.loads(result["content"][0]["text"]).get("lines", [])
         print("识别到的文本行：", lines)
         return lines
     except Exception as e:

@@ -4,18 +4,19 @@ This guide explains how to sign and notarize ocrtool-mcp for distribution.
 
 ## Quick Start
 
-For a complete automated build, sign, and notarize workflow:
+For a complete automated build, sign, notarize, package, and formula-update workflow:
 
 ```bash
 # One command to rule them all
 ./scripts/build-release.sh 1.0.1
 
 # This will:
-# 1. Build universal binary
-# 2. Sign with your Developer ID
-# 3. Create release archives
-# 4. Generate checksums
-# 5. Optionally notarize
+# 1. Run tests
+# 2. Build a universal binary
+# 3. Sign with your Developer ID if the identity is available
+# 4. Optionally notarize
+# 5. Create release archives and checksums
+# 6. Update Formula/ocrtool-mcp.rb to the new release asset URL
 ```
 
 ---
@@ -46,7 +47,7 @@ You need an active Apple Developer account ($99/year) to:
 
 ### Automatic Signing (Recommended)
 
-Use the provided script:
+Use the provided script or the dedicated signing helper:
 
 ```bash
 # Sign the release binary
@@ -207,7 +208,30 @@ base64 -i certificate.p12 -o certificate.base64.txt
 
 ### Update GitHub Actions Workflow
 
-Add signing step to `.github/workflows/release.yml`:
+The repository release workflow already supports these secrets and will use them automatically.
+
+### Release Outputs
+
+`./scripts/build-release.sh <version>` now produces:
+
+- `release/ocrtool-mcp-v<version>-universal`
+- `release/ocrtool-mcp-v<version>-universal-macos.tar.gz`
+- `release/checksums.txt`
+- `release/release-metadata.json`
+- an updated `Formula/ocrtool-mcp.rb` in the working tree
+
+### Homebrew Formula
+
+The release workflow will publish a binary-based formula and sync it back to the repository default branch after the release is created.
+If you need to update the formula manually:
+
+```bash
+./scripts/update-formula.sh 1.0.1 <archive-sha256>
+```
+
+### Legacy Manual GitHub Actions Example
+
+If you need to customize the workflow further, use this as a reference:
 
 ```yaml
 - name: Import Certificate

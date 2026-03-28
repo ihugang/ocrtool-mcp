@@ -2,7 +2,7 @@
 
 [🇺🇸 English Documentation](README.md)
 
-**ocrtool-mcp** 是一个基于 macOS Vision 框架构建的原生 OCR 模块，使用 Swift 实现，遵循 [Model Context Protocol (MCP)](https://modelcontextprotocol.io) 协议，可被如 Claude Desktop、Cursor、Continue、Windsurf、Cline、Cherry Studio 等 AI IDE 工具调用。
+**ocrtool-mcp** 是一个基于 macOS Vision 框架构建的原生 OCR MCP Server，使用 Swift 实现，面向本地 stdio 集成，可被 Claude Desktop、Cursor、Continue、Windsurf、Cline、Cherry Studio 等工具调用。
 
 ![platform](https://img.shields.io/badge/platform-macOS-blue)
 ![language](https://img.shields.io/badge/language-Swift-orange)
@@ -15,7 +15,7 @@
 
 - ✅ 基于 macOS 原生 Vision 框架的高精度 OCR
 - ✅ 支持中文和英文混合识别
-- ✅ 提供标准 MCP JSON-RPC 接口
+- ✅ 提供标准 MCP 生命周期：`initialize`、`tools/list`、`tools/call`
 - ✅ 返回包含像素坐标的逐行文字识别结果
 - ✅ 支持多种图片输入方式（本地路径、URL、Base64）
 - ✅ 灵活的输出格式（纯文本、Markdown 表格、JSON、代码注释）
@@ -43,17 +43,17 @@ ocrtool-mcp --help
 直接下载已编译好的 Universal Binary，支持所有 Mac（Intel 和 Apple Silicon）：
 
 ```bash
-# 下载最新版本 (v1.0.0)
-curl -L -O https://github.com/ihugang/ocrtool-mcp/releases/download/v1.0.0/ocrtool-mcp-v1.0.0-universal-macos.tar.gz
+# 下载最新版本 (v1.0.1)
+curl -L -O https://github.com/ihugang/ocrtool-mcp/releases/download/v1.0.1/ocrtool-mcp-v1.0.1-universal-macos.tar.gz
 
 # 解压
-tar -xzf ocrtool-mcp-v1.0.0-universal-macos.tar.gz
+tar -xzf ocrtool-mcp-v1.0.1-universal-macos.tar.gz
 
 # 授予执行权限
-chmod +x ocrtool-mcp-v1.0.0-universal
+chmod +x ocrtool-mcp-v1.0.1-universal
 
 # 移动到系统路径（推荐）
-sudo mv ocrtool-mcp-v1.0.0-universal /usr/local/bin/ocrtool-mcp
+sudo mv ocrtool-mcp-v1.0.1-universal /usr/local/bin/ocrtool-mcp
 
 # 验证安装
 ocrtool-mcp --help
@@ -93,16 +93,49 @@ ocrtool-mcp
 .build/release/ocrtool-mcp
 ```
 
-向 stdin 发送 JSON-RPC 请求：
+通过 stdin 走典型 MCP 生命周期：
 ```json
 {
   "jsonrpc": "2.0",
-  "id": "1",
-  "method": "ocr_text",
+  "id": 1,
+  "method": "initialize",
   "params": {
-    "image": "test.jpg",
-    "lang": "zh+en",
-    "format": "text"
+    "protocolVersion": "2024-11-05",
+    "capabilities": {},
+    "clientInfo": {
+      "name": "example-client",
+      "version": "1.0.1"
+    }
+  }
+}
+```
+
+然后发送：
+
+```json
+{"jsonrpc":"2.0","method":"notifications/initialized"}
+```
+
+列出工具：
+
+```json
+{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
+```
+
+调用 OCR 工具：
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "ocr_extract_text",
+    "arguments": {
+      "image_path": "test.jpg",
+      "lang": "zh+en",
+      "format": "text"
+    }
   }
 }
 ```
@@ -124,7 +157,7 @@ ocrtool-mcp
 | `output.insertAsComment` | Boolean | 是否将结果格式化为代码注释 | `true` / `false` |
 | `output.language` | String | 代码注释的语言风格 | `"python"`, `"swift"`, `"html"` |
 
-**注意**：`image`/`image_path`、`url`、`base64` 三者必须且只能提供一个。
+**注意**：`image`/`image_path`、`url`、`base64` 三者必须且只能提供一个。在 MCP 调用里，这些字段位于 `params.arguments` 下。
 
 ### 输出格式说明（`format` 参数）
 
@@ -132,7 +165,7 @@ ocrtool-mcp
 |--------|------|----------|
 | `text` / `simple` | 纯文本，每行一个识别结果 | `你好\nHello` |
 | `table` / `markdown` | Markdown 表格（包含坐标） | 见下方示例 |
-| `structured` / `full` | 完整 JSON-RPC 响应（包含 bbox） | 见快速开始部分 |
+| `structured` / `full` | 包含 bbox 的 JSON 字符串 | `{"lines":[...]}` |
 | `auto` | 自动选择：单行用 text，多行用 table | - |
 
 ---
@@ -167,8 +200,10 @@ Claude Desktop 使用 `claude_desktop_config.json` 配置 MCP 服务器。
 
 或者更具体：
 ```
-使用 ocr_text 工具识别 ~/Desktop/receipt.jpg 中的文字，输出为表格格式
+使用 `ocr_extract_text` 识别 `~/Desktop/receipt.jpg` 中的文字，并输出为表格格式
 ```
+
+当前工具名为 `ocr_extract_text`。
 
 ### Cursor
 
@@ -271,11 +306,14 @@ Claude Desktop 使用 `claude_desktop_config.json` 配置 MCP 服务器。
 ```json
 {
   "jsonrpc": "2.0",
-  "id": "1",
-  "method": "ocr_text",
+  "id": 1,
+  "method": "tools/call",
   "params": {
-    "image": "~/Desktop/screenshot.png",
-    "format": "text"
+    "name": "ocr_extract_text",
+    "arguments": {
+      "image_path": "~/Desktop/screenshot.png",
+      "format": "text"
+    }
   }
 }
 ```
@@ -291,12 +329,15 @@ Hello World
 ```json
 {
   "jsonrpc": "2.0",
-  "id": "2",
-  "method": "ocr_text",
+  "id": 2,
+  "method": "tools/call",
   "params": {
-    "url": "https://example.com/receipt.jpg",
-    "lang": "zh+en",
-    "format": "markdown"
+    "name": "ocr_extract_text",
+    "arguments": {
+      "url": "https://example.com/receipt.jpg",
+      "lang": "zh+en",
+      "format": "markdown"
+    }
   }
 }
 ```
@@ -314,11 +355,14 @@ Hello World
 ```json
 {
   "jsonrpc": "2.0",
-  "id": "3",
-  "method": "ocr_text",
+  "id": 3,
+  "method": "tools/call",
   "params": {
-    "base64": "iVBORw0KGgoAAAANSUhEUgAAAAUA...",
-    "format": "structured"
+    "name": "ocr_extract_text",
+    "arguments": {
+      "base64": "iVBORw0KGgoAAAANSUhEUgAAAAUA...",
+      "format": "structured"
+    }
   }
 }
 ```
@@ -328,12 +372,17 @@ Hello World
 ```json
 {
   "jsonrpc": "2.0",
-  "id": "4",
-  "method": "ocr_text",
+  "id": 4,
+  "method": "tools/call",
   "params": {
-    "image": "./code_screenshot.png",
-    "output.insertAsComment": true,
-    "output.language": "python"
+    "name": "ocr_extract_text",
+    "arguments": {
+      "image_path": "./code_screenshot.png",
+      "output": {
+        "insertAsComment": true,
+        "language": "python"
+      }
+    }
   }
 }
 ```
@@ -355,26 +404,44 @@ import json
 import subprocess
 
 def ocr_image(image_path, ocr_tool_path):
-    """调用 ocrtool-mcp 识别图片"""
-    json_rpc = json.dumps({
+    """通过 MCP 的 tools/call 接口调用 ocrtool-mcp。"""
+    initialize = json.dumps({
         "jsonrpc": "2.0",
-        "id": "1",
-        "method": "ocr_text",
+        "id": 1,
+        "method": "initialize",
         "params": {
-            "image": image_path,
-            "format": "structured",
-            "lang": "zh+en"
+            "protocolVersion": "2024-11-05",
+            "capabilities": {},
+            "clientInfo": {"name": "python-example", "version": "1.0.1"}
+        }
+    })
+    initialized = json.dumps({
+        "jsonrpc": "2.0",
+        "method": "notifications/initialized"
+    })
+    tool_call = json.dumps({
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+            "name": "ocr_extract_text",
+            "arguments": {
+                "image_path": image_path,
+                "format": "structured",
+                "lang": "zh+en"
+            }
         }
     })
 
-    cmd = f"echo '{json_rpc}' | {ocr_tool_path}"
+    cmd = f"printf '%s\\n%s\\n%s\\n' '{initialize}' '{initialized}' '{tool_call}' | {ocr_tool_path}"
     proc = subprocess.Popen(cmd, shell=True,
                           stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE)
     out, err = proc.communicate()
 
-    result = json.loads(out.decode())
-    return result.get("result", {}).get("lines", [])
+    responses = [json.loads(line) for line in out.decode().splitlines() if line.strip()]
+    tool_result = responses[-1]["result"]["content"][0]["text"]
+    return json.loads(tool_result).get("lines", [])
 
 # 使用示例
 lines = ocr_image("~/Desktop/test.png",

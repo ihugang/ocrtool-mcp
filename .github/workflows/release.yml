@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   build-and-release:
     runs-on: macos-latest
@@ -18,25 +21,34 @@ jobs:
         with:
           swift-version: "5.9"
 
+      - name: Import code signing certificate
+        if: ${{ secrets.APPLE_CERTIFICATE_BASE64 != '' && secrets.APPLE_CERTIFICATE_PASSWORD != '' }}
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          echo "$CERTIFICATE_BASE64" | base64 --decode > certificate.p12
+          security create-keychain -p actions build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p actions build.keychain
+          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k actions build.keychain
+
       - name: Get version from tag
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-      - name: Build universal binary
-        run: |
-          swift build -c release --arch arm64 --arch x86_64
-          cp .build/apple/Products/Release/ocrtool-mcp ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal
+      - name: Build release artifacts
+        env:
+          NOTARIZE: ${{ secrets.APPLE_ID != '' && secrets.APPLE_APP_PASSWORD != '' && 'always' || 'never' }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          UPDATE_FORMULA: true
+        run: ./scripts/build-release.sh ${{ steps.get_version.outputs.VERSION }}
 
-      - name: Verify universal binary
-        run: |
-          file ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal
-          lipo -info ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal
-
-      - name: Create release archive
-        run: |
-          tar -czf ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal-macos.tar.gz ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal
-          shasum -a 256 ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal > checksums.txt
-          shasum -a 256 ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal-macos.tar.gz >> checksums.txt
+      - name: Test packaged binary
+        run: ./release/ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal --help
 
       - name: Generate release notes
         id: release_notes
@@ -67,8 +79,13 @@ jobs:
           ## Checksums (SHA256)
 
           \`\`\`
-          $(cat checksums.txt)
+          $(cat release/checksums.txt)
           \`\`\`
+
+          ## Homebrew Formula
+
+          The workflow also syncs the repository formula on the default branch. If you maintain a separate tap, copy:
+          [Formula/ocrtool-mcp.rb](https://github.com/ihugang/ocrtool-mcp/blob/master/Formula/ocrtool-mcp.rb)
 
           ## Documentation
 
@@ -80,11 +97,31 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal
-            ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal-macos.tar.gz
-            checksums.txt
+            release/ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal
+            release/ocrtool-mcp-v${{ steps.get_version.outputs.VERSION }}-universal-macos.tar.gz
+            release/checksums.txt
+            release/release-metadata.json
+            Formula/ocrtool-mcp.rb
           body_path: release_notes.md
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync formula to default branch
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          cp Formula/ocrtool-mcp.rb /tmp/ocrtool-mcp.rb
+          git fetch origin "$DEFAULT_BRANCH"
+          git checkout "$DEFAULT_BRANCH"
+          cp /tmp/ocrtool-mcp.rb Formula/ocrtool-mcp.rb
+          if git diff --quiet -- Formula/ocrtool-mcp.rb; then
+            echo "Formula already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/ocrtool-mcp.rb
+          git commit -m "chore: update Homebrew formula for v${{ steps.get_version.outputs.VERSION }}"
+          git push origin "HEAD:$DEFAULT_BRANCH"
