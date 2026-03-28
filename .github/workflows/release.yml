@@ -27,11 +27,14 @@ jobs:
           swift --version
 
       - name: Import code signing certificate
-        if: ${{ secrets.APPLE_CERTIFICATE_BASE64 != '' && secrets.APPLE_CERTIFICATE_PASSWORD != '' }}
         env:
           CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
           CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
         run: |
+          if [ -z "$CERTIFICATE_BASE64" ] || [ -z "$CERTIFICATE_PASSWORD" ]; then
+            echo "Code signing certificate not configured. Skipping import."
+            exit 0
+          fi
           echo "$CERTIFICATE_BASE64" | base64 --decode > certificate.p12
           security create-keychain -p actions build.keychain
           security default-keychain -s build.keychain
@@ -45,7 +48,7 @@ jobs:
 
       - name: Build release artifacts
         env:
-          NOTARIZE: ${{ secrets.APPLE_ID != '' && secrets.APPLE_APP_PASSWORD != '' && 'always' || 'never' }}
+          NOTARIZE: auto
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
