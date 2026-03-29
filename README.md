@@ -213,6 +213,17 @@ Call the OCR tool:
 
 **Note**: Exactly one of `image`/`image_path`, `url`, or `base64` must be provided. In MCP calls, these fields live under `params.arguments`.
 
+## Documentation
+
+- Core docs in the repository root:
+  - `README.md`
+  - `README.zh.md`
+  - `CHANGELOG.md`
+  - `VERSION`
+- Supplementary docs:
+  - [`docs/README.md`](docs/README.md)
+  - [`docs/CODE_SIGNING.md`](docs/CODE_SIGNING.md)
+
 ### Output Format Options (`format` parameter)
 
 | Format Value | Description | Output Example |

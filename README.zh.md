@@ -212,6 +212,17 @@ ocrtool-mcp
 
 **注意**：`image`/`image_path`、`url`、`base64` 三者必须且只能提供一个。在 MCP 调用里，这些字段位于 `params.arguments` 下。
 
+## 文档结构
+
+- 根目录核心文档：
+  - `README.md`
+  - `README.zh.md`
+  - `CHANGELOG.md`
+  - `VERSION`
+- 补充文档：
+  - [`docs/README.md`](docs/README.md)
+  - [`docs/CODE_SIGNING.md`](docs/CODE_SIGNING.md)
+
 ### 输出格式说明（`format` 参数）
 
 | 格式值 | 说明 | 输出示例 |
