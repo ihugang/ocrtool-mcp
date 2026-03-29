@@ -8,7 +8,7 @@ final class OCRToolMCPServerTests: XCTestCase {
         var server = OCRToolMCPServer()
 
         let responseText = try XCTUnwrap(
-            server.handleLine(#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.3"}}}"#)
+            server.handleLine(#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.4"}}}"#)
         )
         let response = try XCTUnwrap(
             JSONSerialization.jsonObject(with: Data(responseText.utf8)) as? [String: Any]
@@ -26,7 +26,7 @@ final class OCRToolMCPServerTests: XCTestCase {
 
     func testToolsListRequiresInitializedNotification() throws {
         var server = OCRToolMCPServer()
-        _ = server.handleLine(#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.3"}}}"#)
+        _ = server.handleLine(#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.4"}}}"#)
 
         let response = try XCTUnwrap(
             server.handleLine(#"{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}"#)
@@ -37,7 +37,7 @@ final class OCRToolMCPServerTests: XCTestCase {
 
     func testToolsListReturnsOCRToolAfterInitialization() throws {
         var server = OCRToolMCPServer()
-        _ = server.handleLine(#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.3"}}}"#)
+        _ = server.handleLine(#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.4"}}}"#)
         _ = server.handleLine(#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#)
 
         let response = try XCTUnwrap(
@@ -50,7 +50,7 @@ final class OCRToolMCPServerTests: XCTestCase {
 
     func testToolCallReturnsToolErrorForMissingImageInput() throws {
         var server = OCRToolMCPServer()
-        _ = server.handleLine(#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.3"}}}"#)
+        _ = server.handleLine(#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.4"}}}"#)
         _ = server.handleLine(#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#)
 
         let response = try XCTUnwrap(
@@ -150,7 +150,7 @@ final class OCRToolMCPServerTests: XCTestCase {
 
     private func makeInitializedServer() -> OCRToolMCPServer {
         var server = OCRToolMCPServer()
-        _ = server.handleLine(#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.3"}}}"#)
+        _ = server.handleLine(#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.4"}}}"#)
         _ = server.handleLine(#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#)
         return server
     }

@@ -24,14 +24,15 @@ public struct OCRResult: Codable, Equatable {
     public var markdownTable: String {
         guard !lines.isEmpty else { return "No text found." }
 
-        let header = "| Text | X | Y | Width | Height |"
-        let separator = "|------|---|---|--------|--------|"
+        let header = "| Text | X (px) | Y (px, from bottom) | Width (px) | Height (px) |"
+        let separator = "|------|--------|----------------------|------------|-------------|"
         let rows = lines.map { line in
             let box = line.bbox
             return "| \(line.text.replacingOccurrences(of: "|", with: "\\|")) | \(Int(box.x)) | \(Int(box.y)) | \(Int(box.width)) | \(Int(box.height)) |"
         }
 
-        return ([header, separator] + rows).joined(separator: "\n")
+        let note = "\n> Bounding box origin is at the **bottom-left** of the image; Y increases upward."
+        return ([header, separator] + rows).joined(separator: "\n") + note
     }
 
     public func commented(language: String) -> String {
@@ -100,7 +101,7 @@ public enum OCRFormat: String {
 
     init?(rawInput: String?) {
         guard let rawInput else {
-            self = .structured
+            self = .auto
             return
         }
 
@@ -156,9 +157,17 @@ enum OCRExecutionError: Error {
 
 public struct OCRToolMCPServer {
     public static let serverName = "ocrtool-mcp"
-    public static let serverVersion = "1.0.3"
+    public static let serverVersion = "1.0.4"
     public static let protocolVersion = "2024-11-05"
     public static let toolName = "ocr_extract_text"
+
+    // Vision Framework supported recognition languages (macOS 12+)
+    static let supportedVisionLanguages: Set<String> = [
+        "zh-Hans", "zh-Hant", "en-US",
+        "fr-FR", "it-IT", "de-DE", "es-ES", "pt-BR",
+        "ar-SA", "ru-RU", "ko-KR", "ja-JP",
+        "uk-UA", "th-TH", "vi-VN"
+    ]
 
     private var initializeCompleted = false
     private var initializedNotificationReceived = false
@@ -231,6 +240,9 @@ public struct OCRToolMCPServer {
             guard let id else { return nil }
             guard ensureOperational(id: id) else { return currentOperationalErrorResponse(for: id) }
             return handleToolCall(id: id, params: params)
+        case "ping":
+            guard let id else { return nil }
+            return makeResultResponse(id: id, result: [:] as [String: Any])
         case "shutdown":
             guard let id else { return nil }
             return makeResultResponse(id: id, result: NSNull())
@@ -320,9 +332,19 @@ public struct OCRToolMCPServer {
         let commentLanguage = stringValue(output["language"]) ?? stringValue(arguments["output.language"]) ?? "swift"
         let commentStyle = insertAsComment ? CommentStyle(language: commentLanguage) : nil
 
-        let langTokens = (stringValue(arguments["lang"]) ?? "zh+en")
+        let rawLangTokens = (stringValue(arguments["lang"]) ?? "zh+en")
             .split(separator: "+")
-            .map { normalizeVisionLanguage(String($0)) }
+            .map { String($0) }
+
+        let langTokens = try rawLangTokens.map { token -> String in
+            let normalized = normalizeVisionLanguage(token)
+            guard Self.supportedVisionLanguages.contains(normalized) else {
+                throw OCRExecutionError.invalidArguments(
+                    "Unsupported language code '\(token)'. Supported values: \(Self.supportedVisionLanguages.sorted().joined(separator: ", "))."
+                )
+            }
+            return normalized
+        }
 
         let enhanced = boolValue(arguments["enhanced"]) ?? true
 
@@ -337,6 +359,56 @@ public struct OCRToolMCPServer {
         )
     }
 
+    private static let maxDownloadBytes = 50 * 1024 * 1024  // 50 MB
+    private static let downloadTimeout: TimeInterval = 30
+
+    private func downloadImage(from remoteURL: URL) throws -> Data {
+        // file:// URLs are handled synchronously without network
+        if remoteURL.isFileURL {
+            do {
+                return try Data(contentsOf: remoteURL)
+            } catch {
+                throw OCRExecutionError.downloadFailed("Failed to read file URL: \(error.localizedDescription)")
+            }
+        }
+
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = Self.downloadTimeout
+        config.timeoutIntervalForResource = Self.downloadTimeout
+        let session = URLSession(configuration: config)
+
+        var downloadedData: Data?
+        var downloadError: Error?
+
+        let semaphore = DispatchSemaphore(value: 0)
+        let task = session.dataTask(with: remoteURL) { data, response, error in
+            defer { semaphore.signal() }
+            if let error {
+                downloadError = error
+                return
+            }
+            guard let data else {
+                downloadError = NSError(domain: "OCRToolMCP", code: 1, userInfo: [NSLocalizedDescriptionKey: "Empty response body."])
+                return
+            }
+            if data.count > Self.maxDownloadBytes {
+                downloadError = NSError(domain: "OCRToolMCP", code: 2, userInfo: [NSLocalizedDescriptionKey: "Image exceeds maximum allowed size of \(Self.maxDownloadBytes / 1024 / 1024) MB."])
+                return
+            }
+            downloadedData = data
+        }
+        task.resume()
+        semaphore.wait()
+
+        if let downloadError {
+            throw OCRExecutionError.downloadFailed("Failed to download image from URL: \(downloadError.localizedDescription)")
+        }
+        guard let data = downloadedData else {
+            throw OCRExecutionError.downloadFailed("Failed to download image from URL: no data received.")
+        }
+        return data
+    }
+
     private func runOCR(_ request: OCRToolArguments) throws -> OCRResult {
         let localImageURL: URL
         var temporaryURL: URL?
@@ -346,14 +418,14 @@ public struct OCRToolMCPServer {
                 throw OCRExecutionError.invalidArguments("Invalid 'url'.")
             }
 
+            let data = try downloadImage(from: remoteURL)
             do {
-                let data = try Data(contentsOf: remoteURL)
                 let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".img")
                 try data.write(to: tempURL, options: .atomic)
                 temporaryURL = tempURL
                 localImageURL = tempURL
             } catch {
-                throw OCRExecutionError.downloadFailed("Failed to download image from URL: \(error.localizedDescription)")
+                throw OCRExecutionError.downloadFailed("Failed to persist downloaded image: \(error.localizedDescription)")
             }
         } else if let base64 = request.base64 {
             guard let data = Data(base64Encoded: base64) else {
@@ -453,7 +525,7 @@ public struct OCRToolMCPServer {
                     ],
                     "lang": [
                         "type": "string",
-                        "description": "OCR languages separated by '+', for example 'zh+en'."
+                        "description": "OCR languages separated by '+'. Aliases: zh=zh-Hans, zh-tw=zh-Hant, en=en-US. Supported: zh-Hans, zh-Hant, en-US, fr-FR, it-IT, de-DE, es-ES, pt-BR, ar-SA, ru-RU, ko-KR, ja-JP, uk-UA, th-TH, vi-VN. Default: zh+en."
                     ],
                     "enhanced": [
                         "type": "boolean",
@@ -462,7 +534,7 @@ public struct OCRToolMCPServer {
                     "format": [
                         "type": "string",
                         "enum": ["text", "markdown", "structured", "auto"],
-                        "description": "How the OCR result should be rendered for the text response."
+                        "description": "How the OCR result should be rendered. 'text': plain lines. 'markdown': table with bounding boxes (origin bottom-left, Y increases upward). 'structured': JSON with full bbox data. 'auto': text for single line, markdown table for multiple lines."
                     ],
                     "output": [
                         "type": "object",
@@ -564,8 +636,32 @@ private func normalizeVisionLanguage(_ token: String) -> String {
         return "zh-Hans"
     case "zh-tw", "zh-hk", "zh-hant":
         return "zh-Hant"
-    case "en":
+    case "en", "en-us":
         return "en-US"
+    case "fr", "fr-fr":
+        return "fr-FR"
+    case "it", "it-it":
+        return "it-IT"
+    case "de", "de-de":
+        return "de-DE"
+    case "es", "es-es":
+        return "es-ES"
+    case "pt", "pt-br":
+        return "pt-BR"
+    case "ar", "ar-sa":
+        return "ar-SA"
+    case "ru", "ru-ru":
+        return "ru-RU"
+    case "ko", "ko-kr":
+        return "ko-KR"
+    case "ja", "ja-jp":
+        return "ja-JP"
+    case "uk", "uk-ua":
+        return "uk-UA"
+    case "th", "th-th":
+        return "th-TH"
+    case "vi", "vi-vn":
+        return "vi-VN"
     default:
         return token
     }
