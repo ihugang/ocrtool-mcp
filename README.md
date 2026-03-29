@@ -28,6 +28,8 @@
 
 ### Method 1: Using Homebrew (Easiest)
 
+Homebrew availability follows the release pipeline: install or upgrade with Homebrew after the GitHub Actions release workflow finishes and syncs `Formula/ocrtool-mcp.rb`.
+
 ```bash
 brew tap ihugang/ocrtool
 brew install ocrtool-mcp
@@ -43,17 +45,17 @@ ocrtool-mcp --help
 Download the pre-compiled Universal Binary that supports all Macs (Intel and Apple Silicon):
 
 ```bash
-# Download latest version (v1.0.3)
-curl -L -O https://github.com/ihugang/ocrtool-mcp/releases/download/v1.0.3/ocrtool-mcp-v1.0.3-universal-macos.tar.gz
+VERSION="<release-version>"
+curl -L -O "https://github.com/ihugang/ocrtool-mcp/releases/download/v${VERSION}/ocrtool-mcp-v${VERSION}-universal-macos.tar.gz"
 
 # Extract
-tar -xzf ocrtool-mcp-v1.0.3-universal-macos.tar.gz
+tar -xzf "ocrtool-mcp-v${VERSION}-universal-macos.tar.gz"
 
 # Make executable
-chmod +x ocrtool-mcp-v1.0.3-universal
+chmod +x "ocrtool-mcp-v${VERSION}-universal"
 
 # Move to system path (recommended)
-sudo mv ocrtool-mcp-v1.0.3-universal /usr/local/bin/ocrtool-mcp
+sudo mv "ocrtool-mcp-v${VERSION}-universal" /usr/local/bin/ocrtool-mcp
 
 # Verify installation
 ocrtool-mcp --help
@@ -105,7 +107,7 @@ Typical MCP lifecycle over stdin:
     "capabilities": {},
     "clientInfo": {
       "name": "example-client",
-      "version": "1.0.3"
+      "version": "0.1.0"
     }
   }
 }
@@ -413,7 +415,7 @@ def ocr_image(image_path, ocr_tool_path):
         "params": {
             "protocolVersion": "2024-11-05",
             "capabilities": {},
-            "clientInfo": {"name": "python-example", "version": "1.0.3"}
+            "clientInfo": {"name": "python-example", "version": "0.1.0"}
         }
     })
     initialized = json.dumps({

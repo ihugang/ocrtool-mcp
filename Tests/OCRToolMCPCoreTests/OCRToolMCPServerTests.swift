@@ -20,7 +20,7 @@ final class OCRToolMCPServerTests: XCTestCase {
 
         XCTAssertEqual(result["protocolVersion"] as? String, "2024-11-05")
         XCTAssertEqual(serverInfo["name"] as? String, "ocrtool-mcp")
-        XCTAssertEqual(serverInfo["version"] as? String, "1.0.3")
+        XCTAssertEqual(serverInfo["version"] as? String, OCRToolMCPServer.serverVersion)
         XCTAssertEqual(tools["listChanged"] as? Bool, false)
     }
 

@@ -24,6 +24,9 @@ jobs:
           xcodebuild -version
           swift --version
 
+      - name: Check version consistency
+        run: ./scripts/check-version-consistency.sh
+
       - name: Run tests
         run: swift test
 

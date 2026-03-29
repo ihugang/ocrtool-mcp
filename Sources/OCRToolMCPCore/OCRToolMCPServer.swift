@@ -157,7 +157,7 @@ enum OCRExecutionError: Error {
 
 public struct OCRToolMCPServer {
     public static let serverName = "ocrtool-mcp"
-    public static let serverVersion = "1.0.4"
+    public static let serverVersion = "1.0.5"
     public static let protocolVersion = "2024-11-05"
     public static let toolName = "ocr_extract_text"
 

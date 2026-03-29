@@ -28,6 +28,8 @@
 
 ### 方法 1：使用 Homebrew（最简单）
 
+Homebrew 的可用状态以发布流水线为准：请在 GitHub Actions 的 release workflow 完成并同步 `Formula/ocrtool-mcp.rb` 之后，再执行 Homebrew 安装或升级。
+
 ```bash
 brew tap ihugang/ocrtool
 brew install ocrtool-mcp
@@ -43,17 +45,17 @@ ocrtool-mcp --help
 直接下载已编译好的 Universal Binary，支持所有 Mac（Intel 和 Apple Silicon）：
 
 ```bash
-# 下载最新版本 (v1.0.3)
-curl -L -O https://github.com/ihugang/ocrtool-mcp/releases/download/v1.0.3/ocrtool-mcp-v1.0.3-universal-macos.tar.gz
+VERSION="<release-version>"
+curl -L -O "https://github.com/ihugang/ocrtool-mcp/releases/download/v${VERSION}/ocrtool-mcp-v${VERSION}-universal-macos.tar.gz"
 
 # 解压
-tar -xzf ocrtool-mcp-v1.0.3-universal-macos.tar.gz
+tar -xzf "ocrtool-mcp-v${VERSION}-universal-macos.tar.gz"
 
 # 授予执行权限
-chmod +x ocrtool-mcp-v1.0.3-universal
+chmod +x "ocrtool-mcp-v${VERSION}-universal"
 
 # 移动到系统路径（推荐）
-sudo mv ocrtool-mcp-v1.0.3-universal /usr/local/bin/ocrtool-mcp
+sudo mv "ocrtool-mcp-v${VERSION}-universal" /usr/local/bin/ocrtool-mcp
 
 # 验证安装
 ocrtool-mcp --help
@@ -104,7 +106,7 @@ ocrtool-mcp
     "capabilities": {},
     "clientInfo": {
       "name": "example-client",
-      "version": "1.0.3"
+      "version": "0.1.0"
     }
   }
 }
@@ -412,7 +414,7 @@ def ocr_image(image_path, ocr_tool_path):
         "params": {
             "protocolVersion": "2024-11-05",
             "capabilities": {},
-            "clientInfo": {"name": "python-example", "version": "1.0.3"}
+            "clientInfo": {"name": "python-example", "version": "0.1.0"}
         }
     })
     initialized = json.dumps({

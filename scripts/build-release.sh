@@ -20,7 +20,12 @@
 
 set -euo pipefail
 
-VERSION_INPUT="${1:-${VERSION:-$(git describe --tags --abbrev=0 2>/dev/null || echo "dev")}}"
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT_DIR"
+
+source "$ROOT_DIR/scripts/version.sh"
+
+VERSION_INPUT="${1:-${VERSION:-$(read_repo_version)}}"
 VERSION="${VERSION_INPUT#v}"
 
 APP_NAME="${APP_NAME:-ocrtool-mcp}"
@@ -31,9 +36,6 @@ KEYCHAIN_PROFILE="${KEYCHAIN_PROFILE:-AC_PASSWORD}"
 APPLE_TEAM_ID="${APPLE_TEAM_ID:-6X2HSWDZCR}"
 UPDATE_FORMULA="${UPDATE_FORMULA:-true}"
 RUN_TESTS="${RUN_TESTS:-true}"
-
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$ROOT_DIR"
 
 UNIVERSAL_NAME="${APP_NAME}-v${VERSION}-universal"
 ARCHIVE_NAME="${UNIVERSAL_NAME}-macos.tar.gz"

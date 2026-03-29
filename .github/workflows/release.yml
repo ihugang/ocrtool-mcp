@@ -46,6 +46,15 @@ jobs:
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+      - name: Verify tag matches VERSION file
+        run: |
+          REPO_VERSION="$(tr -d '[:space:]' < VERSION)"
+          TAG_VERSION="${{ steps.get_version.outputs.VERSION }}"
+          if [[ "$REPO_VERSION" != "$TAG_VERSION" ]]; then
+            echo "VERSION file ($REPO_VERSION) does not match tag version ($TAG_VERSION)"
+            exit 1
+          fi
+
       - name: Build release artifacts
         env:
           NOTARIZE: auto
