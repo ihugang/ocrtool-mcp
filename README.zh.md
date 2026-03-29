@@ -27,6 +27,19 @@
 
 ## 📦 安装
 
+### 我该选 Skill 还是 MCP？
+
+对大多数普通用户，可以直接这样判断：
+
+- 如果你的 agent 平台支持 **skill**，优先用仓库内置的 skill，体验更像自然语言工作流
+- 如果你的 agent 平台支持 **MCP server** 配置，就接入 `ocrtool-mcp` 作为工具
+
+实际可按下面理解：
+
+- **Codex / Claude 且支持 skills**：优先安装 skill
+- **Claude Desktop / Cursor / Continue / Windsurf / Cline / Cherry Studio**：优先配置 MCP
+- **不确定**：如果平台有 skills 目录，就先装 skill；否则就走 MCP
+
 ### 方法 1：使用 Homebrew（最简单）
 
 Homebrew 的可用状态以发布流水线为准：请在 GitHub Actions 的 release workflow 完成并同步 `Formula/ocrtool-mcp.rb` 之后，再执行 Homebrew 安装或升级。
@@ -93,6 +106,17 @@ swift build -c release
 ```
 
 skill 源码位于 `skill/ocr-workflow/`，也可以手动复制到其他 skill 目录。
+
+#### 普通用户怎么做
+
+1. 先安装或编译 `ocrtool-mcp`
+2. 把 skill 安装到 agent 的 skills 目录
+3. 如有需要，重启 agent
+4. 然后直接用自然语言提需求，例如：
+   - `提取 ~/Desktop/receipt.png 里的文字`
+   - `把这张截图 OCR 成 markdown`
+
+如果你的 agent 不支持 skill，就跳过这里，直接看下面的 MCP 配置。
 
 ---
 
@@ -200,6 +224,26 @@ ocrtool-mcp
 ---
 
 ## 🛠 AI 工具配置指南
+
+### 给普通用户：怎样让 agent 用上这个项目
+
+这个项目有两种接入方式：
+
+1. **Skill 模式**
+   - 适合支持 skills 的 agent 平台
+   - 你安装内置的 `ocr-workflow` skill
+   - agent 通过自然语言工作流调用本地 OCR 能力
+
+2. **MCP 模式**
+   - 适合支持 MCP server 配置的平台
+   - 你把 `ocrtool-mcp` 可执行文件接进去
+   - agent 会把 `ocr_extract_text` 当成工具使用
+
+经验法则：
+
+- 如果产品让你配置 **skills 目录**，就安装 skill
+- 如果产品让你配置 **MCP server command**，就接 MCP
+- 如果两者都支持，skill 更适合普通用户，MCP 更适合底层工具集成
 
 ### Claude Desktop (Claude Code)
 

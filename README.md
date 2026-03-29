@@ -27,6 +27,19 @@
 
 ## 📦 Installation
 
+### Which One Should You Use?
+
+For most users, the choice is simple:
+
+- Use the **bundled skill** when your agent platform supports skills and you want a more guided, natural-language workflow.
+- Use **MCP** when your agent platform supports MCP servers and you want `ocrtool-mcp` exposed as a standard tool.
+
+In practical terms:
+
+- **Codex / Claude with skills support**: install the skill first
+- **Claude Desktop / Cursor / Continue / Windsurf / Cline / Cherry Studio**: connect the MCP server
+- **Not sure**: start with the skill if your platform has a skills directory; otherwise use MCP
+
 ### Method 1: Using Homebrew (Easiest)
 
 Homebrew availability follows the release pipeline: install or upgrade with Homebrew after the GitHub Actions release workflow finishes and syncs `Formula/ocrtool-mcp.rb`.
@@ -93,6 +106,17 @@ Install into Claude:
 ```
 
 The skill bundle lives in `skill/ocr-workflow/` and can also be copied into another skill directory manually.
+
+#### What a normal user should do
+
+1. Install or build `ocrtool-mcp`
+2. Install the skill into the agent's skills directory
+3. Restart the agent if needed
+4. Ask naturally:
+   - `Extract text from ~/Desktop/receipt.png`
+   - `OCR this screenshot and return markdown`
+
+If your agent does not support skills, skip this and use the MCP setup below.
 
 ---
 
@@ -201,6 +225,26 @@ Call the OCR tool:
 ---
 
 ## 🛠 AI Tool Configuration Guide
+
+### For ordinary users: how to make an agent use this project
+
+There are two integration styles:
+
+1. **Skill mode**
+   - Best when the agent supports skills
+   - You install the bundled `ocr-workflow` skill
+   - The agent then uses natural-language OCR workflows backed by the local binary
+
+2. **MCP mode**
+   - Best when the agent supports MCP server configuration
+   - You point the agent at the `ocrtool-mcp` executable
+   - The agent sees `ocr_extract_text` as a tool
+
+Rule of thumb:
+
+- If the product asks you for a **skills folder**, install the skill
+- If the product asks you for an **MCP server command**, configure MCP
+- If it supports both, skill is the friendlier user experience and MCP is the lower-level tool integration
 
 ### Claude Desktop (Claude Code)
 
