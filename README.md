@@ -16,6 +16,7 @@
 - ✅ Accurate OCR powered by macOS Vision Framework
 - ✅ Recognizes both Chinese and English text
 - ✅ Standard MCP lifecycle with `initialize`, `tools/list`, and `tools/call`
+- ✅ Bundled `ocr-workflow` skill for agent platforms that prefer skills over raw MCP
 - ✅ Returns line-wise OCR results with bounding boxes (in pixels)
 - ✅ Multiple image input methods (local path, URL, Base64)
 - ✅ Flexible output formats (plain text, Markdown table, JSON, code comments)
@@ -75,9 +76,35 @@ swift build -c release
 
 The executable will be located at `.build/release/ocrtool-mcp`
 
+### Method 4: Install the Bundled Skill
+
+If your agent platform supports skills, this repo ships a reusable `ocr-workflow` skill that wraps the local `ocrtool-mcp` binary.
+
+Install into Codex:
+
+```bash
+./scripts/install-skill.sh codex
+```
+
+Install into Claude:
+
+```bash
+./scripts/install-skill.sh claude
+```
+
+The skill bundle lives in `skill/ocr-workflow/` and can also be copied into another skill directory manually.
+
 ---
 
 ## 🚀 Quick Start
+
+### Use as a Skill
+
+After installing the bundled skill, ask your agent for OCR work in plain language, for example:
+
+- `Extract the text from ~/Desktop/receipt.png`
+- `OCR this screenshot and return a markdown table`
+- `Read this image and turn the text into Python comments`
 
 ### View Help
 

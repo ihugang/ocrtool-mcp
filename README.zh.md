@@ -16,6 +16,7 @@
 - ✅ 基于 macOS 原生 Vision 框架的高精度 OCR
 - ✅ 支持中文和英文混合识别
 - ✅ 提供标准 MCP 生命周期：`initialize`、`tools/list`、`tools/call`
+- ✅ 内置 `ocr-workflow` skill，适合更偏向 skill 的 agent 平台
 - ✅ 返回包含像素坐标的逐行文字识别结果
 - ✅ 支持多种图片输入方式（本地路径、URL、Base64）
 - ✅ 灵活的输出格式（纯文本、Markdown 表格、JSON、代码注释）
@@ -75,9 +76,35 @@ swift build -c release
 
 编译完成后，可执行文件位于 `.build/release/ocrtool-mcp`
 
+### 方法 4：安装仓库内置 Skill
+
+如果你的 agent 平台更适合走 skill 而不是直接接 MCP，这个仓库内置了可复用的 `ocr-workflow` skill，并由本地 `ocrtool-mcp` 二进制提供能力。
+
+安装到 Codex：
+
+```bash
+./scripts/install-skill.sh codex
+```
+
+安装到 Claude：
+
+```bash
+./scripts/install-skill.sh claude
+```
+
+skill 源码位于 `skill/ocr-workflow/`，也可以手动复制到其他 skill 目录。
+
 ---
 
 ## 🚀 快速开始
+
+### 作为 Skill 使用
+
+安装 skill 后，可以直接让 agent 用自然语言做 OCR，例如：
+
+- `提取 ~/Desktop/receipt.png 里的文字`
+- `把这张截图 OCR 成 markdown 表格`
+- `识别图片中的文本并转成 Python 注释`
 
 ### 查看帮助信息
 
